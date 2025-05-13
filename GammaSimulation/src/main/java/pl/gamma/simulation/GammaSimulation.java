@@ -1,4 +1,4 @@
-package gamma;
+package pl.gamma.simulation;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
