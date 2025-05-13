@@ -1,4 +1,4 @@
-package gamma;
+package pl.gamma.simulation;
 
 public class Particle {
     private int count;
