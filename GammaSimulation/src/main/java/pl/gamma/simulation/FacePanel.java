@@ -1,4 +1,4 @@
-package gamma;
+package pl.gamma.simulation;
 
 import javax.swing.*;
 import java.awt.*;
