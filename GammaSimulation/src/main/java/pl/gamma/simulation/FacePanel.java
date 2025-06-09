@@ -5,16 +5,16 @@ import java.awt.*;
 
 public class FacePanel extends JPanel {
     private int totalSteps = 10;
-    private int currentStep = 0;
+    private double currentStep = 0;
     private int initialSize = 80;
     private int finalSize = 20;
     private double scale = 1.0;
 
-    public void updateStep(int step, double scale) {
+    public void updateStep(double step, double scale) {
         this.currentStep = step;
         this.scale = scale;
         repaint();
-    }
+}
 
     @Override
     protected void paintComponent(Graphics g) {
@@ -45,7 +45,7 @@ public class FacePanel extends JPanel {
         int faceSize = (int) (initialSize * scale);
         faceSize = Math.max(finalSize, faceSize);
 
-        int faceX = padding + currentStep * stepWidth - faceSize / 2;
+        int faceX = padding + (int)(currentStep * stepWidth) - faceSize / 2;
         int faceY = lineY - 40 - faceSize;
 
         // Żółty 
