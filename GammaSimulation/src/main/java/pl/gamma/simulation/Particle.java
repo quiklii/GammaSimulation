@@ -1,18 +1,18 @@
 package pl.gamma.simulation;
 
 public class Particle {
-    private int count;
+    private double count;
 
     public Particle(int count) {
         this.count = count;
     }
 
-    public int getCount() {
+    public double getCount() {
         return count;
     }
 
-    public void absorb(double absorptionCoefficient) {
-        count -= (int) (count * absorptionCoefficient);
+    public void absorb(double absorptionCoefficient, double fraction) {
+        count -= (count * absorptionCoefficient) * fraction;
     }
 }
 
