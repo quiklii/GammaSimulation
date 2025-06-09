@@ -17,6 +17,9 @@ public class GammaSimulation extends JPanel {
     private Timer timer;
     private double absorptionCoefficient;
     private int maxSteps;
+    private int subSteps = 20; // liczba mikrokroków do płnnej animacji
+    private int currentSubStep = 0;
+    private int totalInitialParticles; // do skalowania
 
     private JTextField inputParticles;
     private JTextField inputCoefficient;
@@ -92,6 +95,7 @@ public class GammaSimulation extends JPanel {
     private void startSimulation(ActionEvent e) {
         try {
             int count = Integer.parseInt(inputParticles.getText());
+            totalInitialParticles = count;
             absorptionCoefficient = Double.parseDouble(inputCoefficient.getText());
             maxSteps = Integer.parseInt(inputSteps.getText());
             
@@ -111,26 +115,27 @@ public class GammaSimulation extends JPanel {
                 timer.stop();
             }
 
-            timer = new Timer(1000, ev -> {
-                if (particle.getCount() > 1 && step < maxSteps) {
-                    particle.absorb(absorptionCoefficient);
+           timer = new Timer(50, ev -> {
+            if (step < maxSteps) {
+                if (currentSubStep < subSteps) {
+                    particle.absorb(absorptionCoefficient, 1.0 / subSteps);
+                    currentSubStep++;
+
+                    double scale = particle.getCount() / totalInitialParticles;
+                    facePanel.updateStep(step + (double) currentSubStep / subSteps, scale);
+                    statusLabel.setText(String.format("Pozostałe cząstki: %.2f", particle.getCount()));
+                } else {
                     step++;
+                    currentSubStep = 0;
                     dataset.addValue(particle.getCount(), "Cząstki", Integer.toString(step));
-                    statusLabel.setText("Pozostałe cząstki: " + particle.getCount());
-                    double scale = (double) particle.getCount() / Integer.parseInt(inputParticles.getText());
-                    facePanel.updateStep(step, scale);
-                    
-                    
-                   // facePanel.setFacePosition(step);
-                   // facePanel.setFaceScale(scale);
-                   // facePanel.repaint();
-                 } else {
-                    timer.stop();
-                    statusLabel.setText("Symulacja zakończona. Pozostało: " + particle.getCount());
-                    saveButton.setEnabled(true);
-                    stopButton.setEnabled(false);
                 }
-            });
+            } else {
+                timer.stop();
+                statusLabel.setText("Symulacja zakończona. Pozostało: " + (int) particle.getCount());
+                saveButton.setEnabled(true);
+                stopButton.setEnabled(false);
+            }
+        });
             timer.start();
             saveButton.setEnabled(false);
             stopButton.setEnabled(true);
