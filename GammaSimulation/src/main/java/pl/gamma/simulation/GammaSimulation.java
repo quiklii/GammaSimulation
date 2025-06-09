@@ -117,7 +117,7 @@ public class GammaSimulation extends JPanel {
             }
 
            timer = new Timer(50, ev -> {
-            if (step < maxSteps) {
+            if (step < maxSteps && particle.getCount() > 1) {
                 if (currentSubStep < subSteps) {
                     particle.absorb(absorptionCoefficient, 1.0 / subSteps);
                     currentSubStep++;
