@@ -108,6 +108,7 @@ public class GammaSimulation extends JPanel {
             statusLabel.setText("Symulacja trwa...");
             dataset.clear();
             step = 0;
+            currentSubStep = 0;
             dataset.addValue(particle.getCount(), "Cząstki", Integer.toString(step));
             facePanel.updateStep(step, 1.0);
             
