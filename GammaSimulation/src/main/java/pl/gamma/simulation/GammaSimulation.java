@@ -124,7 +124,7 @@ public class GammaSimulation extends JPanel {
 
                     double scale = particle.getCount() / totalInitialParticles;
                     facePanel.updateStep(step + (double) currentSubStep / subSteps, scale);
-                    statusLabel.setText(String.format("Pozostałe cząstki: %.2f", particle.getCount()));
+                    statusLabel.setText(String.format("Pozostałe cząstki: %.0f", particle.getCount()));
                 } else {
                     step++;
                     currentSubStep = 0;
