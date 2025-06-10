@@ -27,7 +27,7 @@
         <artifactId>exec-maven-plugin</artifactId>
         <version>3.0.0</version>
         <configuration>
-          <mainClass>pl.gamma.simulation.GammaSimulationGUI</mainClass>
+          <mainClass>pl.gamma.simulation.GammaSimulation</mainClass>
         </configuration>
       </plugin>
 
