@@ -10,11 +10,17 @@ public class FacePanel extends JPanel {
     private int finalSize = 20;
     private double scale = 1.0;
 
+
+    public void setTotalSteps(int totalSteps) {
+        this.totalSteps = totalSteps;
+        repaint();
+    }    
+
     public void updateStep(double step, double scale) {
         this.currentStep = step;
         this.scale = scale;
         repaint();
-}
+    }
 
     @Override
     protected void paintComponent(Graphics g) {
@@ -26,20 +32,33 @@ public class FacePanel extends JPanel {
         g2d.setColor(Color.WHITE);
         g2d.fillRect(0, 0, getWidth(), getHeight());
 
-        // Wymiary i pozycje
+        // Parametry osi
         int padding = 30;
         int lineY = getHeight() - 60;
-        int stepWidth = (getWidth() - 2 * padding) / (totalSteps);
+        int stepWidth = (getWidth() - 2 * padding) / totalSteps;
 
-        //Oś
+        // Oblicz odstęp etykiet (np. co 10 dla 100 kroków, co 100 dla 1000 itd.)
+        int labelInterval = Math.max(1, totalSteps / 10);
+
+        // Rysuj oś X
         g2d.setColor(Color.BLACK);
         g2d.drawLine(padding, lineY, getWidth() - padding, lineY);
 
+        // Tiki i etykiety osi (tylko co labelInterval)
         for (int i = 0; i <= totalSteps; i++) {
-            int x = padding + i * stepWidth;
-            g2d.drawLine(x, lineY - 5, x, lineY + 5);
-            g2d.drawString(Integer.toString(i), x - 5, lineY + 20);
+            if (i % labelInterval == 0 || i == totalSteps) {
+                int x = padding + i * stepWidth;
+                // Tik na osi
+                g2d.drawLine(x, lineY - 5, x, lineY + 5);
+                // Etykieta osi
+                String label = Integer.toString(i);
+                FontMetrics fm = g2d.getFontMetrics();
+                int labelWidth = fm.stringWidth(label);
+                g2d.drawString(label, x - labelWidth / 2, lineY + 20);
+            }
         }
+    
+
 
         // Emotikon
         int faceSize = (int) (initialSize * scale);
@@ -60,6 +79,11 @@ public class FacePanel extends JPanel {
         g2d.fillOval(faceX + 3 * faceSize / 4 - eyeSize, faceY + faceSize / 3, eyeSize, eyeSize);
         int smileWidth = faceSize / 2;
         int smileHeight = faceSize / 6;
-        g2d.drawArc(faceX + faceSize / 4, faceY + faceSize / 2, smileWidth, smileHeight, 0, -180);
+        if(scale >= 0.5){
+            g2d.drawArc(faceX + faceSize / 4, faceY + faceSize / 2, smileWidth, smileHeight, 0, -180);
+        }
+        else{
+            g2d.drawArc(faceX + faceSize / 4, faceY+3 + faceSize / 2, smileWidth, smileHeight, 0, 180);
+        }
     }
 }
