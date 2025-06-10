@@ -17,7 +17,7 @@ public class GammaSimulation extends JPanel {
     private Timer timer;
     private double absorptionCoefficient;
     private int maxSteps;
-    private int subSteps = 20; // liczba mikrokroków do płnnej animacji
+    private int subSteps = 20; // liczba mikrokroków do płynnej animacji
     private int currentSubStep = 0;
     private int totalInitialParticles; // do skalowania
 
@@ -32,7 +32,7 @@ public class GammaSimulation extends JPanel {
 
     private DefaultCategoryDataset dataset;
     private int step;
-    private int initialCount = 1;
+    private int initialCount; // poprawka: ustawione na wartość początkową
     
     private FacePanel facePanel;
 
@@ -69,9 +69,9 @@ public class GammaSimulation extends JPanel {
         statusLabel = new JLabel("Symulacja nie została rozpoczęta.");
         add(statusLabel, BorderLayout.SOUTH);
         
-        //Panel buzki
+        // Panel buźki
         facePanel = new FacePanel();
-        facePanel.setPreferredSize(new Dimension(400,300));
+        facePanel.setPreferredSize(new Dimension(400, 300));
         add(facePanel, BorderLayout.NORTH);
 
         // Wykres
@@ -82,7 +82,9 @@ public class GammaSimulation extends JPanel {
                 "Cząstki",
                 dataset,
                 PlotOrientation.VERTICAL,
-                false, true, false);
+                true,   // włącz legendę dla serii "Cząstki" i "Teoretyczna"
+                true,
+                false);
         ChartPanel chartPanel = new ChartPanel(lineChart);
         chartPanel.setPreferredSize(new Dimension(400, 300));
         add(chartPanel, BorderLayout.CENTER);
@@ -96,6 +98,7 @@ public class GammaSimulation extends JPanel {
         try {
             int count = Integer.parseInt(inputParticles.getText());
             totalInitialParticles = count;
+            initialCount = count; // ustawienie wartości początkowej
             absorptionCoefficient = Double.parseDouble(inputCoefficient.getText());
             maxSteps = Integer.parseInt(inputSteps.getText());
             
@@ -105,38 +108,48 @@ public class GammaSimulation extends JPanel {
             }
 
             particle = new Particle(count);
+            facePanel.setTotalSteps(maxSteps);
             statusLabel.setText("Symulacja trwa...");
             dataset.clear();
             step = 0;
             currentSubStep = 0;
+
+            // Dodanie wartości początkowych dla obu serii
             dataset.addValue(particle.getCount(), "Cząstki", Integer.toString(step));
+            dataset.addValue(initialCount * Math.exp(-absorptionCoefficient * step), "Teoretyczna", Integer.toString(step));
+
             facePanel.updateStep(step, 1.0);
             
             if (timer != null && timer.isRunning()) {
                 timer.stop();
             }
 
-           timer = new Timer(50, ev -> {
-            if (step < maxSteps && particle.getCount() > 1) {
-                if (currentSubStep < subSteps) {
-                    particle.absorb(absorptionCoefficient, 1.0 / subSteps);
-                    currentSubStep++;
+            timer = new Timer(50, ev -> {
+                if (step < maxSteps && particle.getCount() > 0.5) {
+                    if (currentSubStep < subSteps) {
+                        particle.absorb(absorptionCoefficient / subSteps);
+                        currentSubStep++;
 
-                    double scale = particle.getCount() / totalInitialParticles;
-                    facePanel.updateStep(step + (double) currentSubStep / subSteps, scale);
-                    statusLabel.setText(String.format("Pozostałe cząstki: %.0f", particle.getCount()));
+                        double scale = particle.getCount() / totalInitialParticles;
+                        facePanel.updateStep(step + (double) currentSubStep / subSteps, scale);
+                        statusLabel.setText(String.format("Pozostałe cząstki: %.0f", particle.getCount()));
+                    } else {
+                        step++;
+                        currentSubStep = 0;
+                        // Aktualizacja danych wykresu dla rzeczywistych i teoretycznych
+                        dataset.addValue(particle.getCount(), "Cząstki", Integer.toString(step));
+                        double theoreticalCount = initialCount * Math.exp(-absorptionCoefficient * step);
+                        dataset.addValue(theoreticalCount, "Teoretyczna", Integer.toString(step));
+                    }
                 } else {
-                    step++;
-                    currentSubStep = 0;
-                    dataset.addValue(particle.getCount(), "Cząstki", Integer.toString(step));
+                    timer.stop();
+                    statusLabel.setText("Symulacja zakończona. Pozostało: " + (int) particle.getCount());
+                    saveButton.setEnabled(true);
+                    stopButton.setEnabled(false);
                 }
-            } else {
-                timer.stop();
-                statusLabel.setText("Symulacja zakończona. Pozostało: " + (int) particle.getCount());
-                saveButton.setEnabled(true);
-                stopButton.setEnabled(false);
-            }
-        });
+                repaint();
+                Toolkit.getDefaultToolkit().sync();
+            });
             timer.start();
             saveButton.setEnabled(false);
             stopButton.setEnabled(true);
@@ -146,21 +159,22 @@ public class GammaSimulation extends JPanel {
         }
     }
     
-    private void stopSimulation (ActionEvent e) {
-    	if (timer != null && timer.isRunning()) {
-    		timer.stop();
-    		statusLabel.setText("Symulacja przerwana na kroku:" + step);
-    		stopButton.setEnabled(false);
-    		saveButton.setEnabled(true);
-    	}
+    private void stopSimulation(ActionEvent e) {
+        if (timer != null && timer.isRunning()) {
+            timer.stop();
+            statusLabel.setText("Symulacja przerwana na kroku: " + step);
+            stopButton.setEnabled(false);
+            saveButton.setEnabled(true);
+        }
     }
 
     private void saveToFile(ActionEvent e) {
         try (FileWriter writer = new FileWriter("symulacja_wyniki.txt")) {
             writer.write("Wyniki symulacji:\n");
             for (int i = 0; i <= step; i++) {
-                Number value = dataset.getValue("Cząstki", Integer.toString(i));
-                writer.write("Krok " + i + ": " + value + "\n");
+                Number actual = dataset.getValue("Cząstki", Integer.toString(i));
+                Number theoretical = dataset.getValue("Teoretyczna", Integer.toString(i));
+                writer.write("Krok " + i + ": rzeczywiste=" + actual + ", teoretyczne=" + theoretical + "\n");
             }
             writer.write("Współczynnik pochłaniania: " + absorptionCoefficient + "\n");
             statusLabel.setText("Wyniki zapisane do pliku symulacja_wyniki.txt.");
@@ -172,9 +186,9 @@ public class GammaSimulation extends JPanel {
     public static void main(String[] args) {
         JFrame frame = new JFrame("Symulacja Gamma 🙂");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(800, 600);
+        frame.setSize(1200, 1000);
         frame.setContentPane(new GammaSimulation());
         frame.setVisible(true);     
     }
-    
 }
+
